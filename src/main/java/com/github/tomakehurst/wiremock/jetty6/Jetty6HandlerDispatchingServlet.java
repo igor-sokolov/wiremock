@@ -48,6 +48,8 @@ public class Jetty6HandlerDispatchingServlet extends HttpServlet {
 	private RequestHandler requestHandler;
 	private String mappedUnder;
 	private Notifier notifier;
+	private HttpRequestNotifierHelper notifierHelper;
+
 	private String wiremockFileSourceRoot = "/";
 	private boolean shouldForwardToFilesContext;
 	
@@ -66,6 +68,7 @@ public class Jetty6HandlerDispatchingServlet extends HttpServlet {
 			". Normlized mapped under returned '" + mappedUnder + "'");
 		requestHandler = (RequestHandler) context.getAttribute(handlerClassName);
 		notifier = (Notifier) context.getAttribute(Notifier.KEY);
+		notifierHelper = new HttpRequestNotifierHelper();
 	}
 	
 	/**
@@ -91,10 +94,9 @@ public class Jetty6HandlerDispatchingServlet extends HttpServlet {
 	@Override
 	protected void service(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws ServletException, IOException {
 		LocalNotifier.set(notifier);
-		
-		Request request = new Jetty6HttpServletRequestAdapter(httpServletRequest, mappedUnder);
-        notifier.info("Received request: " + httpServletRequest.toString());
+		notifier.info(notifierHelper.log(httpServletRequest));
 
+		Request request = new Jetty6HttpServletRequestAdapter(httpServletRequest, mappedUnder);
 		Response response = requestHandler.handle(request);
         if (Thread.currentThread().isInterrupted()) {
             return;
@@ -141,4 +143,44 @@ public class Jetty6HandlerDispatchingServlet extends HttpServlet {
         RequestDispatcher dispatcher = httpServletRequest.getRequestDispatcher(decode(forwardUrl, UTF_8.name()));
         dispatcher.forward(httpServletRequest, httpServletResponse);
     }
+
+	/**
+	 * Helper to prepare log messages for {@link Jetty6HandlerDispatchingServlet}.
+	 * It adds remote IP address for regular request#toString().
+	 */
+	private final class HttpRequestNotifierHelper {
+		private final String HTTP_REQUEST_LOG_FORMAT =
+				"Request received:\n" +     // just header
+				"Remote Address:%s\n" +     // remote address IP
+				"%s";                       // standard number of fields for
+											// httpServletRequest#toString()
+
+		String log(final HttpServletRequest request) {
+			return String.format(HTTP_REQUEST_LOG_FORMAT, extractIpAddress(request), request);
+		}
+
+		/**
+		 * Extract client IP address from request.
+		 *
+		 * This method handles also a case if user is behind a proxy server or
+		 * access your web server through a load balancer (for example, in cloud
+		 * hosting). Simple javax.servlet.ServletRequest#getRemoteAddr()
+		 * will get the IP address of the proxy server or load balancer server,
+		 * not the original IP address of a client.
+		 * To solve we look at header <b>X-FORWARDED-FOR</b> first. See details
+		 * <a href="https://en.wikipedia.org/wiki/X-Forwarded-For</a>
+		 *
+		 * @param request http request
+		 * @return client IP address
+		 */
+		String extractIpAddress(final HttpServletRequest request) {
+			// is client behind something?
+			String ipAddress = request.getHeader("X-FORWARDED-FOR");
+			if (ipAddress == null) {
+				ipAddress = request.getRemoteAddr();
+			}
+
+			return ipAddress;
+		}
+	}
 }
