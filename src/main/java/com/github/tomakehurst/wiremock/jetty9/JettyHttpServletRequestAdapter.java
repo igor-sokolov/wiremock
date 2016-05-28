@@ -195,6 +195,31 @@ public class JettyHttpServletRequestAdapter implements Request {
         return false;
     }
 
+
+    /**
+    * Get client IP address.
+    * <p>
+    * This method handles also a case if user is behind a proxy server or
+    * access your web server through a load balancer (for example, in cloud
+    * hosting). Simple javax.servlet.ServletRequest#getRemoteAddr()
+    * will get the IP address of the proxy server or load balancer server,
+    * not the original IP address of a client.
+    * To solve we look at header
+    * <a href="https://en.wikipedia.org/wiki/X-Forwarded-For">X-FORWARDED-FOR</a>
+    *
+    * @return client IP address
+    */
+    @Override
+    public String getClientIpAddress() {
+        // is client behind something?
+        String ipAddress = request.getHeader("X-FORWARDED-FOR");
+        if (ipAddress == null) {
+            ipAddress = request.getRemoteAddr();
+        }
+
+        return ipAddress;
+    }
+
     @Override
     public String toString() {
         return request.toString() + getBodyAsString();

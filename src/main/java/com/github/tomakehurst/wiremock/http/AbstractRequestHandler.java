@@ -15,13 +15,9 @@
  */
 package com.github.tomakehurst.wiremock.http;
 
-import com.google.common.base.Function;
-
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.common.LocalNotifier.notifier;
-import static com.google.common.base.Joiner.on;
-import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.newArrayList;
 
 public abstract class AbstractRequestHandler implements RequestHandler, RequestEventSource {
@@ -64,6 +60,7 @@ public abstract class AbstractRequestHandler implements RequestHandler, RequestE
 		if (request.isBrowserProxyRequest()) {
 			sb.append(" (via browser proxy request)");
 		}
+		sb.append(". Client IP: " + request.getClientIpAddress());
 		sb.append("\n\n");
 		sb.append(request.getHeaders());
 

@@ -47,6 +47,7 @@ public class LoggedRequest implements Request {
     private final byte[] body;
     private final boolean isBrowserProxyRequest;
     private final Date loggedDate;
+    private final String clientIpAddress;
 
     public static LoggedRequest createFrom(Request request) {
         return new LoggedRequest(request.getUrl(),
@@ -57,7 +58,7 @@ public class LoggedRequest implements Request {
             request.isBrowserProxyRequest(),
             new Date(),
             request.getBodyAsBase64(),
-            null);
+            null, request.getClientIpAddress());
     }
 
     @JsonCreator
@@ -70,7 +71,8 @@ public class LoggedRequest implements Request {
         @JsonProperty("browserProxyRequest") boolean isBrowserProxyRequest,
         @JsonProperty("loggedDate") Date loggedDate,
         @JsonProperty("bodyAsBase64") String bodyAsBase64,
-        @JsonProperty("body") String ignoredBodyOnlyUsedForBinding) {
+        @JsonProperty("body") String ignoredBodyOnlyUsedForBinding,
+        @JsonProperty("body") String clientIpAddress) {
         this.url = url;
         this.absoluteUrl = absoluteUrl;
         this.method = method;
@@ -80,6 +82,7 @@ public class LoggedRequest implements Request {
         this.queryParams = splitQuery(URI.create(url));
         this.isBrowserProxyRequest = isBrowserProxyRequest;
         this.loggedDate = loggedDate;
+        this.clientIpAddress = clientIpAddress;
     }
 
     @Override
@@ -165,6 +168,11 @@ public class LoggedRequest implements Request {
         return isBrowserProxyRequest;
     }
 
+    @Override
+    public String getClientIpAddress() {
+        return clientIpAddress;
+    }
+
     public Date getLoggedDate() {
         return loggedDate;
     }
@@ -172,5 +180,4 @@ public class LoggedRequest implements Request {
     public String getLoggedDateString() {
         return Dates.format(loggedDate);
     }
-
 }

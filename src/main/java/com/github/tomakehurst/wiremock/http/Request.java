@@ -41,4 +41,6 @@ public interface Request {
     String getBodyAsBase64();
 
     boolean isBrowserProxyRequest();
+
+    String getClientIpAddress();
 }

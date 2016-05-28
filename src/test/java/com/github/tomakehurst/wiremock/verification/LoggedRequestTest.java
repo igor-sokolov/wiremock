@@ -112,8 +112,8 @@ public class LoggedRequestTest {
                 true,
                 loggedDate,
                 REQUEST_BODY_AS_BASE64,
-                null
-                );
+                null,
+                ":0:0:0:0:0:0:1");
 
         String expectedJson = String.format(JSON_EXAMPLE, loggedDate.getTime());
 
@@ -131,8 +131,8 @@ public class LoggedRequestTest {
             true,
             null,
             REQUEST_BODY_AS_BASE64,
-            null
-            );
+            null,
+            ":0:0:0:0:0:0:1");
 
         assertThat(loggedRequest.getBodyAsString(), is(equalTo(REQUEST_BODY)));
     }
